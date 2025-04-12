@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-127585723-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-127585723-2');
+    </script>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Lottery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="src/styles/main.css">
+    <script type="module" src="src/main.js"></script>
+</head>
+<style>
+    body {
+        margin: 0;
+    }
+</style>
+
+<body>
+    <!-- <div id="control-panel">
+        <div class="counter-controls">
+            <button id="decrease-btn">−</button>
+            <span id="ball-count">0</span>
+            <button id="increase-btn">+</button>
+        </div>
+        <button id="start-btn">Start</button>
+    </div> -->
+
+    <div id="control-panel">
+        <h2>🎱 Lottery Control</h2>
+
+        <div class="info">
+            Ball Count: <span id="ball-count">0</span>
+        </div>
+
+        <button class="panel-btn" id="increase-btn">➕ Add Ball</button>
+        <button class="panel-btn" id="decrease-btn">➖ Remove Ball</button>
+        <button class="panel-btn start" id="start-btn">🎲 Start Lottery</button>
+
+        <div id="lotteryResult"></div>
+
+        <!-- <audio id="lotterySound" src="win-sound.mp3" preload="auto"></audio> -->
+    </div>
+
+</body>
+<!-- <script src="main.js"></script> -->
+
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "vite-threejs-rapier-app",
+  "version": "1.0.0",
+  "description": "A Vite project using Three.js and RAPIER for 3D graphics and physics.",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@dimforge/rapier3d": "^0.10.0",
+    "cannon": "^0.6.2",
+    "dat.gui": "^0.7.9",
+    "three": "^0.152.0",
+    "vite-plugin-html": "^3.2.2"
+  },
+  "devDependencies": {
+    "vite": "^4.5.13",
+    "vite-plugin-wasm": "^3.4.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

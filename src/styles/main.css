@@ -1,0 +1,84 @@
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+canvas {
+  display: block;
+}
+
+/* Control Panel Styles */
+#control-panel {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 360px;
+  padding: 24px;
+  background: #f9f9f9;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', sans-serif;
+  text-align: center;
+  margin: 20px auto;
+}
+
+#control-panel h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Info text */
+#ball-count {
+  font-size: 32px;
+  font-weight: bold;
+  color: #0077cc;
+}
+
+.info {
+  margin: 10px 0 20px;
+  font-size: 18px;
+  color: #555;
+}
+
+/* Buttons */
+.panel-btn {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 16px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  background-color: #0077cc;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.panel-btn:hover {
+  background-color: #005fa3;
+}
+
+.panel-btn.start {
+  background-color: #28a745;
+}
+
+.panel-btn.start:hover {
+  background-color: #218838;
+}
+
+/* Result Display */
+#lotteryResult {
+  margin-top: 24px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #d6336c;
+  transition: transform 0.3s ease;
+}
+
+.dg.ac {
+  display: none;
+}
