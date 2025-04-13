@@ -12,7 +12,8 @@
     "@dimforge/rapier3d": "^0.10.0",
     "cannon": "^0.6.2",
     "dat.gui": "^0.7.9",
-    "three": "^0.152.0",
+    "three": "^0.154.0",
+    "three-csg-ts": "^3.2.0",
     "vite-plugin-html": "^3.2.2"
   },
   "devDependencies": {

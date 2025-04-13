@@ -26,6 +26,10 @@
 </style>
 
 <body>
+    <div id="selected-balls-container">
+        <!-- Balls will be added here dynamically -->
+    </div>
+
     <!-- <div id="control-panel">
         <div class="counter-controls">
             <button id="decrease-btn">−</button>
@@ -49,6 +53,29 @@
         <div id="lotteryResult"></div>
 
         <!-- <audio id="lotterySound" src="win-sound.mp3" preload="auto"></audio> -->
+    </div>
+
+    <div id="result-dialog" class="dialog-overlay hidden">
+        <div class="dialog-box">
+            <h2>🎊 Draw Complete!</h2>
+            <p>Expected Numbers:</p>
+            <div id="expected-numbers" class="draw-number-list"></div>
+            <p>Drawn Balls:</p>
+            <div id="drawn-numbers" class="draw-number-list"></div>
+            <button id="close-result-btn" class="ok-btn">OK</button>
+        </div>
+    </div>
+
+    <div id="draw-dialog" class="dialog-overlay hidden">
+        <div class="dialog-box">
+            <h2>🎉 Ready to Draw?</h2>
+            <p>The selected numbers are:</p>
+            <div id="draw-numbers" class="draw-number-list"></div>
+            <div class="dialog-actions">
+                <button id="confirm-draw-btn">Start Draw</button>
+                <button id="cancel-draw-btn">Cancel</button>
+            </div>
+        </div>
     </div>
 
 </body>

@@ -103,6 +103,8 @@ export class Ball {
     // scene;
     // world;
     radius;
+    isSelected;
+    isEnd;
     number
     /** @param scene {THREE.Scene} */
     constructor(num) {
@@ -110,6 +112,8 @@ export class Ball {
         // this.world = world;
         this.radius = radius
         this.number = num
+        this.isSelected = false;
+        this.isEnd = false;
         this.initGraphics();
         this.initPhysics();
     }

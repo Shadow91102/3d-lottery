@@ -2,9 +2,6 @@ import * as THREE from "three";
 import * as CANNON from "cannon";
 import { Ball } from "./modules/Ball";
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-// import { HDRCubeTextureLoader } from "./HDRCubeTextureLoader";
-// import { RoughnessMipmapper } from './RoughnessMipmapper.js';
-// import { RGBELoader } from './modules/RGBELoader.js';
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
 // import hdr from './assets/mirrored_hall_1k.hdr'
 import hdr from './modules/royal_esplanade_1k.hdr'
@@ -14,6 +11,18 @@ import { GUI } from 'dat.gui';
 let world, scene, camera, renderer, pmremGenerator
 let stats;
 let envMap;
+let holeY;
+let holeRadius;
+let containerCenter;
+let selectedBalls = new Set();
+const displaySlotPosition = new THREE.Vector3(15, 10, 0); // top-right corner of the screen
+const ballSpacing = 4;
+const selectedBallIds = new Set(); // Keep track of which balls are already shown
+let lotteryStartTime;
+let drawnBalls = [];
+let preselectedNumbers = [];
+let isEnd;
+
 const MAX_BALLS = 99;
 
 const balls = []
@@ -59,16 +68,21 @@ function init() {
     createBalls()
 }
 
-function createBalls() {
-    for (let i = 0; i < 49; i++) {
+function createBalls(count = 49) {
+
+    for (let i = 0; i < count; i++) {
         setTimeout(() => {
             addBallScene();
         }, 25 * i);
     }
 }
 
+function initGame() {
+
+}
+
 function addBallScene() {
-    if (balls.length < MAX_BALLS) {
+    if (balls.length < MAX_BALLS && !isRunning) {
         const b = new Ball(balls.length);
         balls.push(b);
         scene.add(b.sphere);
@@ -78,7 +92,7 @@ function addBallScene() {
 }
 
 function removeBallScene() {
-    if (balls.length > 0) {
+    if (balls.length > 0 && !isRunning) {
         const ball = balls.pop();
         scene.remove(ball.sphere);
         world.remove(ball.sphereBody);
@@ -91,10 +105,10 @@ function addHoldClickBehavior(button, onHoldCallback) {
     let timeout = null;
 
     const startHolding = () => {
-        onHoldCallback(); // trigger immediately
+        // onHoldCallback(); // trigger immediately
         timeout = setTimeout(() => {
             interval = setInterval(onHoldCallback, 100); // repeat every 100ms
-        }, 1000); // start repeating after 500ms
+        }, 500); // start repeating after 500ms
     };
 
     const stopHolding = () => {
@@ -120,199 +134,71 @@ function initControllEvents() {
     addHoldClickBehavior(decreaseBtn, removeBallScene);
 
     document.getElementById("start-btn").addEventListener("click", () => {
-        isRunning = !isRunning;
-        document.getElementById("start-btn").textContent = isRunning ? "Stop" : "Start";
+        if (!isRunning) {
+            showDrawDialog(balls.length, function (selectedNumbers) {
+                preselectedNumbers = selectedNumbers;
+                isRunning = true;
+                lotteryStartTime = performance.now();
+                chageStartButtonText();
+                // You can store selectedNumbers if needed
+            });
+        } else {
+            isRunning = false;
+            chageStartButtonText();
+        }
+
     });
 }
 
-// function initGraphics() {
-//     scene = new THREE.Scene()
+function chageStartButtonText() {
+    document.getElementById("start-btn").textContent = isRunning ? "Stop" : "🎲 Start Lottery";
+}
 
-//     camera = new THREE.PerspectiveCamera(
-//         60,
-//         window.innerWidth / window.innerHeight,
-//         0.1,
-//         1000
-//     )
-//     camera.position.set(20, 20, 20)
-//     camera.lookAt({ x: 0, y: 0, z: 0 })
+function showDrawDialog(totalBalls, onConfirm) {
+    const dialog = document.getElementById("draw-dialog");
+    const numbersContainer = document.getElementById("draw-numbers");
 
-//     renderer = new THREE.WebGLRenderer({ antialias: true });
-//     // renderer.setClearColor(0xeeeeee, 1.0)
-//     renderer.shadowMap.enabled = true
-//     renderer.shadowMap.type = 2
-//     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-//     renderer.toneMappingExposure = 1.5;
-//     renderer.outputColorSpace = THREE.SRGBColorSpace;
-//     renderer.setPixelRatio(window.devicePixelRatio);
-//     renderer.setSize(window.innerWidth, window.innerHeight);
-//     renderer.useLegacyLights = false;
+    // Generate 5 unique random numbers
+    const selectedNumbers = [];
+    const numbersPool = Array.from({ length: totalBalls }, (_, i) => i + 1);
+    for (let i = 0; i < 5; i++) {
+        const index = Math.floor(Math.random() * numbersPool.length);
+        selectedNumbers.push(numbersPool.splice(index, 1)[0]);
+    }
 
-//     document.body.appendChild(renderer.domElement);
+    // Populate numbers visually
+    numbersContainer.innerHTML = '';
+    selectedNumbers.forEach(n => {
+        const span = document.createElement('span');
+        span.textContent = n;
+        numbersContainer.appendChild(span);
+    });
 
-//     scene.environmentIntensity = 2.0;
+    // Show the dialog
+    dialog.classList.remove('hidden');
 
-//     // var pmremGenerator = new THREE.PMREMGenerator(renderer);
-//     // pmremGenerator.compileEquirectangularShader();
+    // Event handlers
+    document.getElementById("confirm-draw-btn").onclick = () => {
+        dialog.classList.add('hidden');
+        onConfirm(selectedNumbers); // Pass numbers to your startDraw logic
+    };
 
-//     // loadENV(pmremGenerator)
-
-//     const hdrUrl = 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/abandoned_greenhouse_1k.hdr'
-//     new RGBELoader().load(hdr, texture => {
-//         const gen = new THREE.PMREMGenerator(renderer)
-//         gen.compileEquirectangularShader();
-//         const envMap = gen.fromEquirectangular(texture).texture
-//         scene.environment = envMap
-//         scene.background = envMap
-
-//         texture.dispose()
-//         gen.dispose()
-//     })
-
-//     const controls = new OrbitControls(camera, renderer.domElement)
-
-//     // let ambientLight = new THREE.AmbientLight(0x404040, 1)
-//     // scene.add(ambientLight)
-
-//     let ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-//     scene.add(ambientLight);
-
-//     // let spotLight = new THREE.SpotLight(0x999999)
-//     // spotLight.position.set(-10, 30, 20)
-//     // scene.add(spotLight)
-//     let pointLight = new THREE.PointLight(0xccffcc, 3, 30)
-//     pointLight.castShadow = true
-//     pointLight.position.set(0, 10, 0)
-//     scene.add(pointLight)
-
-//     const sun = new THREE.DirectionalLight(0xffffff, 1);
-//     sun.position.set(10, 30, 10);
-//     sun.castShadow = true;
-//     scene.add(sun);
-
-
-//     // const sun = new THREE.DirectionalLight(0xffffff, 1);
-//     // sun.position.set(10, 20, 10);
-//     // sun.castShadow = true;
-//     // scene.add(sun);
-
-//     // Ground
-//     let groundGeometry = new THREE.PlaneGeometry(200, 200, 32)
-//     let groundMaterial = new THREE.MeshPhysicalMaterial({
-//         color: new THREE.Color('grey'),
-//         roughness: 0.0,
-//         metalness: 0.0,
-//         reflectivity: 1.0,
-//         clearcoat: 1.0,
-//         clearcoatRoughness: 0.0,
-//         transmission: 1.0,
-//         opacity: 1.0,
-//         transparent: true,
-//         envMapIntensity: 2.0,
-//     })
-//     let ground = new THREE.Mesh(groundGeometry, groundMaterial)
-//     ground.rotation.x = -Math.PI / 2
-//     ground.position.y = -46
-//     ground.receiveShadow = true
-//     scene.add(ground)
-
-//     // Glass
-//     let glassGeo = new THREE.SphereGeometry(12, 32, 32);
-//     let glassMat = new THREE.MeshPhysicalMaterial({
-//         side: THREE.DoubleSide,
-//         color: new THREE.Color('grey'),
-//         // emissive: 0x364a55,
-//         roughness: 0,
-//         metalness: .2,
-//         reflectivity: 1,
-//         transparent: true,
-//         opacity: .3,
-//         clearcoat: 1,
-//         clearcoatRoughness: .35,
-//         transmission: 1,
-//         envMapIntensity: 2.0
-//         // roughness: 0.0,
-//         // thickness: 0
-//         // wireframe: true
-//     });
-//     const glassMesh = new THREE.Mesh(glassGeo, glassMat);
-//     // glassMesh.castShadow = true;
-//     scene.add(glassMesh);
-
-//     // Axes Helper
-//     // var axesHelper = new THREE.AxesHelper(5);
-//     // scene.add(axesHelper);
-
-//     // Base Cylinder
-//     var cylinderGeo = new THREE.CylinderGeometry(8, 11, 38, 32, 3, true);
-//     var material = new THREE.MeshPhysicalMaterial({
-//         side: THREE.DoubleSide,
-//         color: new THREE.Color('rgb(60,60,60)'),
-//         // emissive: new THREE.Color('rgb(78,0,0)'),
-//         // emissiveIntensity: .1,
-//         roughness: .1,
-//         metalness: .6,
-//         reflectivity: 1,
-//         clearcoat: 1,
-//         clearcoatRoughness: .3,
-//     })
-//     var base = new THREE.Mesh(cylinderGeo, material);
-//     base.position.y -= 31.5
-//     scene.add(base);
-
-//     // Base Circle
-//     const circleGeo = new THREE.CircleGeometry(8, 18);
-//     const circle = new THREE.Mesh(circleGeo, material)
-//     circle.receiveShadow = true
-//     circle.rotation.x = 1.6
-//     circle.position.y = -12
-//     scene.add(circle)
-
-//     // Hollow Circle
-//     var arcShape = new THREE.Shape()
-//         .moveTo(0, 0)
-//         .absarc(0, 0, 60, 0, Math.PI * 2, false);
-
-//     var holePath = new THREE.Path()
-//         .moveTo(-0, 0)
-//         .absarc(0, 0, 50, 0, Math.PI * 2, true);
-
-//     arcShape.holes.push(holePath);
-//     var hcGeometry = new THREE.ExtrudeGeometry(arcShape, { depth: 18, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 });
-
-//     var hcMesh = new THREE.Mesh(hcGeometry, material);
-//     hcMesh.position.set(0, -10, 0);
-//     hcMesh.rotation.set(1.6, 0, 0);
-//     hcMesh.scale.set(.1, .1, .1);
-//     hcMesh.receiveShadow = true
-//     scene.add(hcMesh)
-
-//     // Solid Circle
-//     arcShape = new THREE.Shape()
-//         .moveTo(0, 0)
-//         .absarc(0, 0, 120, 0, Math.PI * 2, false);
-
-//     var scGeo = new THREE.ExtrudeGeometry(arcShape, { depth: 4, bevelEnabled: true, bevelSegments: 2, steps: 2, bevelSize: 1, bevelThickness: 1 });
-
-//     var scMesh = new THREE.Mesh(scGeo, material);
-//     scMesh.position.set(0, -12, 0);
-//     scMesh.rotation.set(1.6, 0, 0);
-//     scMesh.scale.set(.1, .1, .1);
-//     scMesh.receiveShadow = true
-//     scene.add(scMesh)
-// }
+    document.getElementById("cancel-draw-btn").onclick = () => {
+        dialog.classList.add('hidden');
+    };
+}
 
 function initGraphics() {
     scene = new THREE.Scene()
 
     camera = new THREE.PerspectiveCamera(
-      60,
-      window.innerWidth / window.innerHeight,
-      0.1,
-      1000
+        60,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
     )
     camera.position.set(20, 20, 20)
-    camera.lookAt({x: 0, y: 0, z: 0})
+    camera.lookAt({ x: 0, y: 0, z: 0 })
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     // renderer.setClearColor(0xeeeeee, 1.0)
@@ -368,7 +254,7 @@ function initGraphics() {
         // transparency: .7,
         clearcoat: 1,
         clearcoatRoughness: .3,
-        
+
         // wireframe: true
     })
     let ground = new THREE.Mesh(groundGeometry, groundMaterial)
@@ -378,7 +264,14 @@ function initGraphics() {
     scene.add(ground)
 
     // Glass
-    let glassGeo = new THREE.SphereGeometry(12, 32, 32);
+    // let glassGeo = new THREE.SphereGeometry(12, 32, 32);
+    let glassGeo = new THREE.SphereGeometry(
+        12,                // radius
+        64, 32,            // segments
+        0, Math.PI * 2,    // full circle horizontally
+        0.035 * Math.PI, Math.PI   // only bottom half vertically = bowl
+    );
+
     // let glassMat = new THREE.MeshPhysicalMaterial({
     //     side: THREE.DoubleSide,
     //     color: new THREE.Color('gray'),
@@ -405,16 +298,43 @@ function initGraphics() {
         envMapIntensity: 2.0,      // Environment reflection intensity
         clearcoat: 0.7,            // For extra shine
         clearcoatRoughness: 0.0
-      });
+    });
 
-      
+
     const glassMesh = new THREE.Mesh(glassGeo, glassMat);
     // glassMesh.castShadow = true;
     scene.add(glassMesh);
 
+    // glassMesh.rotation.x = -Math.PI / 2; // Flip it to be bowl-shaped
+
+    // Ball radius (e.g., from your project)
+    // const ballRadius = 1.0;
+    // const holeRadius = 12 * Math.sin(Math.PI * 0.03); // Adjusted to match the bowl's radius
+
+    // // Hole Cylinder Geometry
+    // const holeGeo = new THREE.CylinderGeometry(holeRadius, holeRadius, 24, 64); // height must be large enough
+    // const holeMesh = new THREE.Mesh(holeGeo, glassMat.clone());
+    // holeMesh.rotation.z = Math.PI / 2; // Orient vertically
+    // holeMesh.position.set(0, 0, 0); // Centered on top
+
+    // // Subtract hole from bowl
+    // const bowlCSG = CSG.fromMesh(glassMesh);
+    // const holeCSG = CSG.fromMesh(holeMesh);
+    // const finalCSG = bowlCSG.subtract(holeCSG);
+
+    // const finalGlassMesh = CSG.toMesh(finalCSG, glassMesh.matrix, glassMat);
+    // scene.add(finalGlassMesh);
+
     // Axes Helper
     // var axesHelper = new THREE.AxesHelper( 5 );
     // scene.add( axesHelper );
+
+
+
+    holeY = 12 * Math.cos(0.035 * Math.PI);
+    holeRadius = 12 * Math.sin(0.035 * Math.PI);
+    containerCenter = glassMesh.position;
+    console.log('------containerCenter------', containerCenter)
 
     // Base Cylinder
     var cylinderGeo = new THREE.CylinderGeometry(8, 11, 38, 32, 3, true);
@@ -508,12 +428,86 @@ function initPhysics() {
 
 }
 
+function isInHole(sphere) {
+    // console.log('-containerCenter', containerCenter.x)
+    const dx = sphere.position.x - containerCenter.x;
+    // console.log('-containerCenter', containerCenter)
+    const dz = sphere.position.z - containerCenter.z;
+    const distanceFromCenter = Math.sqrt(dx * dx + dz * dz);
+    // console.log('-------------------distanceFromCenter------------------', (sphere.position.y + 0.8) >= holeY)
+    return (sphere.position.y + 0.8) >= holeY && distanceFromCenter <= holeRadius;
+}
+
+// function intersect(sphere, other) {
+//     // we are using multiplications because it's faster than calling Math.pow
+//     var distance = Math.sqrt((sphere.position.x - other.position.x) * (sphere.position.x - other.position.x) +
+//         (sphere.position.y - other.position.y) * (sphere.position.y - other.position.y) +
+//         (sphere.position.z - other.position.z) * (sphere.position.z - other.position.z));
+//     return distance < (sphere.shapes[0].radius + other.radius);
+// }
+
 function intersect(sphere, other) {
-    // we are using multiplications because it's faster than calling Math.pow
-    var distance = Math.sqrt((sphere.position.x - other.position.x) * (sphere.position.x - other.position.x) +
-        (sphere.position.y - other.position.y) * (sphere.position.y - other.position.y) +
-        (sphere.position.z - other.position.z) * (sphere.position.z - other.position.z));
+
+
+    const dx = sphere.position.x - other.position.x;
+    const dy = sphere.position.y - other.position.y;
+    const dz = sphere.position.z - other.position.z;
+
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
     return distance < (sphere.shapes[0].radius + other.radius);
+}
+
+function showResultDialog(expectedNumbers, drawnBalls) {
+    const dialog = document.getElementById("result-dialog");
+    const expectedContainer = document.getElementById("expected-numbers");
+    const drawnContainer = document.getElementById("drawn-numbers");
+
+    expectedContainer.innerHTML = '';
+    drawnContainer.innerHTML = '';
+
+    // Normalize both lists for comparison
+    const expectedSet = new Set(expectedNumbers);
+    const drawnNumbers = drawnBalls.map(ball => ball.number); // You must store number on each ball
+
+    expectedNumbers.forEach(n => {
+        const span = document.createElement('span');
+        span.textContent = n;
+        expectedContainer.appendChild(span);
+    });
+
+    drawnNumbers.forEach(n => {
+        const span = document.createElement('span');
+        span.textContent = n;
+        if (expectedSet.has(n)) span.classList.add('match');
+        drawnContainer.appendChild(span);
+    });
+
+    dialog.classList.remove("hidden");
+
+
+
+    document.getElementById("close-result-btn").onclick = () => {
+        let ball;
+        while ((ball = balls.pop())) {
+            scene.remove(ball.sphere);
+            world.remove(ball.sphereBody);
+        }
+        chageStartButtonText();
+        clear();
+
+        const count = document.getElementById("ball-count").textContent;
+        createBalls(count);
+        
+        dialog.classList.add("hidden");
+    };
+}
+
+function clear() {
+    document.getElementById("selected-balls-container").innerHTML = '';
+    drawnBalls.length = 0;
+    preselectedNumbers.length = 0;
+    selectedBalls.clear();
 }
 
 function loadENV(pmremGenerator) {
@@ -542,30 +536,89 @@ function loadENV(pmremGenerator) {
     })
 }
 
+function displaySelectedBall(ball) {
+    if (selectedBalls.has(ball.number)) return; // Avoid duplicates
+    selectedBalls.add(ball.number);
+
+    drawnBalls.push(ball);
+    // Render ball in top-right slot logic already here...
+
+    if (drawnBalls.length === 5) {
+        isRunning = false;
+        setTimeout(() => {
+            showResultDialog(preselectedNumbers, drawnBalls);
+        }, 1000); // Optional delay to show last ball before result
+    }
+
+    const container = document.getElementById("selected-balls-container");
+
+    const ballDiv = document.createElement("div");
+    ballDiv.className = "selected-ball";
+    ballDiv.textContent = ball.number;
+    container.appendChild(ballDiv);
+}
+
 function render() {
     world.step(timeStep)
+
+    const now = performance.now();
+    const elapsed = (now - lotteryStartTime) / 1000; // in seconds
+
     if (balls) {
         balls.forEach(ball => {
-            if (!intersect(ball.sphereBody, { position: { x: 0, y: 0, z: 0 }, radius: 10 })) {
-                // console.log(1);
-                const v = ball.sphereBody.velocity
-                const p = ball.sphereBody.position
-                ball.sphereBody.velocity.copy(new CANNON.Vec3(-p.x, -p.y, -p.z))
-            } else {
-                const speed = isRunning ? 80 : 20
-                if (ball.sphereBody.position.y < -9)
-                    ball.sphereBody.velocity.copy(new CANNON.Vec3((Math.random() - 0.5), Math.random() * speed, (Math.random() - 0.5)))
+            const p = ball.sphereBody.position
+            const v = ball.sphereBody.velocity
+
+            // Calculate if the ball is near the top hole
+            const dx = p.x, dz = p.z
+            const distanceFromCenter = Math.sqrt(dx * dx + dz * dz)
+            const holeRadius = 3
+            const topThreshold = 11.5
+            const isAtTopHole = (p.y > topThreshold && distanceFromCenter < holeRadius)
+
+            if (isRunning && isInHole(ball.sphereBody) && !ball.isEnd) {
+                ball.isSelected = true;
+                // ball.sphere.material.color.set('gold');  // Optional: highlight selected ball
+
+                // Launch the ball (keep this as you already have)
+                const launchMultiplier = 1;
+                const v = ball.sphereBody.velocity;
+                ball.sphereBody.velocity.set(v.x * launchMultiplier, v.y * launchMultiplier, v.z * launchMultiplier);
+
+                // Now add the ball to the top-right display
+                displaySelectedBall(ball);  // Display the ball in the slot
+                ball.isEnd = true;
             }
 
-            ball.sphere.position.copy(ball.sphereBody.position)
+            // When ball is NOT selected
+            if (!ball.isSelected) {
+                // If it escapes through the top hole
+                if (!intersect(ball.sphereBody, { position: { x: 0, y: 0, z: 0 }, radius: 10 })) {
+                    ball.sphereBody.velocity.copy(new CANNON.Vec3(-p.x, -p.y, -p.z))
+                }
+
+                // If it's at the bottom, bounce it up
+                else if (p.y < -9) {
+                    const speed = isRunning ? 120 : 20
+                    ball.sphereBody.velocity.copy(new CANNON.Vec3(
+                        (Math.random() - 0.5),
+                        Math.random() * speed,
+                        (Math.random() - 0.5)
+                    ))
+                }
+            }
+
+            // Sync visual with physics
+            ball.sphere.position.copy(p)
             ball.sphere.quaternion.copy(ball.sphereBody.quaternion)
         })
     }
 
     requestAnimationFrame(render)
     renderer.render(scene, camera)
-    stats.update();
+    stats.update()
 }
+
 
 function onWindowResize() {
 
