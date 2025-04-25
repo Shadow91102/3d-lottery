@@ -21,6 +21,7 @@ const selectedBallIds = new Set(); // Keep track of which balls are already show
 let lotteryStartTime;
 let drawnBalls = [];
 let preselectedNumbers = [];
+let leftNumbers = [];
 let isEnd;
 
 const MAX_BALLS = 99;
@@ -137,6 +138,7 @@ function initControllEvents() {
         if (!isRunning) {
             showDrawDialog(balls.length, function (selectedNumbers) {
                 preselectedNumbers = selectedNumbers;
+                leftNumbers = [...selectedNumbers];
                 isRunning = true;
                 lotteryStartTime = performance.now();
                 chageStartButtonText();
@@ -507,6 +509,7 @@ function clear() {
     document.getElementById("selected-balls-container").innerHTML = '';
     drawnBalls.length = 0;
     preselectedNumbers.length = 0;
+    leftNumbers.length = 0;
     selectedBalls.clear();
 }
 
@@ -579,7 +582,15 @@ function render() {
             if (isRunning && isInHole(ball.sphereBody) && !ball.isEnd) {
                 ball.isSelected = true;
                 // ball.sphere.material.color.set('gold');  // Optional: highlight selected ball
-
+                if (leftNumbers.findIndex(number => number === ball.number) === -1) {
+                    const randomIndex = Math.floor(Math.random() * leftNumbers.length);
+                    const left = balls.find(item => item.number === leftNumbers[randomIndex]);
+                    if (left) {
+                        left.updateDisplayNumber(ball.number);
+                    }
+                    ball.updateDisplayNumber(leftNumbers[randomIndex])
+                    leftNumbers.splice(randomIndex, 1);
+                }
                 // Launch the ball (keep this as you already have)
                 const launchMultiplier = 1;
                 const v = ball.sphereBody.velocity;

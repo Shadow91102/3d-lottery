@@ -150,4 +150,21 @@ export class Ball {
         });
         // this.world.add(this.sphereBody);
     }
+    updateDisplayNumber(newDisplayNumber) {
+        this.number = newDisplayNumber;
+        if (this.sphere && this.sphere.material) {
+            this.sphere.material.map = makeTexture(this.number);
+            this.sphere.material.needsUpdate = true;
+        }
+    }
+    release() {
+        if (this.sphere) {
+            this.sphere.geometry.dispose();
+            if (this.sphere.material.map) {
+                this.sphere.material.map.dispose();
+            }
+            this.sphere.material.dispose();
+            this.sphere = null;
+        }
+    }
 }
