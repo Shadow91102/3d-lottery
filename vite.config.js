@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     open: true,
     host: true,
-    port: 3000,
+    port: 5050,
   },
   assetsInclude: ['**/*.hdr'], // Add this line to include .hdr files as assets
 });
